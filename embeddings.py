@@ -46,13 +46,11 @@ import os
 def main():
     # model = Word2Vec.load("GoogleNews-vectors-negative300.bin")
     # print(model.wv['hello'])
-    if os.path.exists("goog_news.bin"):
-        wv = open("goog_news.bin", "wb").readlines()
+    if os.path.exists("goog_news.model"):
+        wv = Word2Vec.load("goog_news.model")
     else:
         wv = api.load('word2vec-google-news-300')
-        with open("goog_news.bin", 'wb') as outfile:
-            pickle.dump(wv, outfile)
-        outfile.close()
+        wv.save("goog_news.model")
 
     print(wv['hello'])
 
