@@ -11,4 +11,8 @@ import torch.optim.lr_scheduler as lr_sched
 # any network = derivative of nn.Module
 # need def forward(self, x - input being given i.e. batch of examples)
 
+# Create nn
 
+# Gather training data from somewhere
+
+# paperswithcode tend to have datasets with research papers

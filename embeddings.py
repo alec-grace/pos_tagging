@@ -44,7 +44,8 @@ def get_nparray(wv, file):
     return words
 
 
-# paperswithcode tend to have datasets with research papers
+# main method, only in use for testing the methods in embeddings.py
+# planning on moving main() to main.py when creating neural net
 def main():
     # check if the model is already saved, if not load it from gensim downloader
     if os.path.exists("goog_news.wordvectors"):
