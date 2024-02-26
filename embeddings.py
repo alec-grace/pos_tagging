@@ -4,13 +4,10 @@
 # Purpose:
 #   Create word embeddings from a given dataset
 
-import nltk
 import numpy as np
 from nltk.tokenize import word_tokenize
 from nltk.tokenize import sent_tokenize
-import gensim
 import gensim.downloader as api
-from gensim.models import Word2Vec
 from gensim.models import KeyedVectors
 import os
 
@@ -25,6 +22,7 @@ def tokenize(data):
         # replace hyphens and periods because the model does not recognize them
         line = line.replace("-", " ")
         line = line.replace(".", " ")
+        # add each sentence with tokenized words to the continuous list
         for sent in sent_tokenize(line):
             token_list.append(word_tokenize(sent))
     return token_list
@@ -39,6 +37,7 @@ def get_nparray(wv, file):
         for word in token:
             try:
                 words.append(wv[word])
+            # catch any "key not found" errors for words not in training data
             except KeyError:
                 non_words[word] = 1 if word not in non_words.keys() else non_words[word] + 1
     words = np.array(words)
