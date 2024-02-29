@@ -2,7 +2,7 @@
 # Author: Alec Grace
 # Created: 20 Feb 2024
 # Purpose:
-#   Create word embeddings from a given dataset
+#   Create word embeddings from a given dataset - needs work
 
 import numpy as np
 from nltk.tokenize import word_tokenize
@@ -10,63 +10,97 @@ from nltk.tokenize import sent_tokenize
 import gensim.downloader as api
 from gensim.models import KeyedVectors
 import os
+import torch
 
 
-# convert a text file into a list of sentences that are tokenized
-def tokenize(data):
-    with open(data, 'r') as data_file:
-        lines = data_file.readlines()
-    data_file.close()
-    token_list = []
-    for line in lines:
-        # replace hyphens and periods because the model does not recognize them
-        line = line.replace("-", " ")
-        line = line.replace(".", " ")
-        # add each sentence with tokenized words to the continuous list
-        for sent in sent_tokenize(line):
-            token_list.append(word_tokenize(sent))
-    return token_list
+class Embeddings:
 
+    def __init__(self):
+        """
+        Constructor for a class to utilize embeddings from
+        Word2Vec's Google News 300 dataset
+        """
+        # check if the embedding model is already saved, if not load it from gensim downloader
+        if os.path.exists("goog_news.wordvectors"):
+            self.wv = KeyedVectors.load("goog_news.wordvectors", mmap='r')
+        else:
+            self.wv = api.load('word2vec-google-news-300')
+            self.wv.save("goog_news.wordvectors")
 
-# convert text file into a numpy array of the word vectors
-def get_nparray(wv, file):
-    tokens = tokenize(file)
-    words = []
-    non_words = {}
-    for token in tokens:
-        for word in token:
-            try:
-                words.append(wv[word])
-            # catch any "key not found" errors for words not in training data
-            except KeyError:
-                non_words[word] = 1 if word not in non_words.keys() else non_words[word] + 1
-    words = np.array(words)
-    return words
+    # convert a text file into a list of sentences that are tokenized
+    def __tokenize_file(self, data):
+        """
+        Tokenizes a whole file
+        :param data: text file
+        :return: the file as a list of individual tokens
+        """
+        with open(data, 'r') as data_file:
+            lines = data_file.readlines()
+        data_file.close()
+        token_list = []
+        for line in lines:
+            # replace hyphens and periods because the model does not recognize them
+            line = line.replace("-", " ")
+            line = line.replace(".", " ")
+            # add each sentence with tokenized words to the continuous list
+            for sent in sent_tokenize(line):
+                token_list.append(word_tokenize(sent))
+        return token_list
 
+    def __tokenize_list(self, data):
+        """
+        Tokenizes sentences in a list
+        :param data: list of sentences
+        :return: list of tokenized sentences
+        """
+        token_list = []
+        for item in data:
+            # replace hyphens and periods because the model does not recognize them
+            item = item.replace("-", " ")
+            item = item.replace(".", " ")
+            # add each sentence with tokenized words to the continuous list
+            token_list.append(word_tokenize(item))
+        return token_list
 
-# main method, only in use for testing the methods in embeddings.py
-# planning on moving main() to main.py when creating neural net
-def main():
-    # check if the model is already saved, if not load it from gensim downloader
-    if os.path.exists("goog_news.wordvectors"):
-        wv = KeyedVectors.load("goog_news.wordvectors", mmap='r')
-    else:
-        wv = api.load('word2vec-google-news-300')
-        wv.save("goog_news.wordvectors")
+    # convert text file into a list of Pytorch Tensors
+    def get_tensor_embeddings(self, data, file: bool):
+        """
+        Arguments:
+        :param data: list of words or csv file of words
+        :param file: True if data is file, False if list
+        :return: tensor values of input words after being embedded through
+        Word2Vec Google-News-Negative300
+        """
+        if file:
+            tokens = self.__tokenize_file(data)
+        else:
+            tokens = self.__tokenize_list(data)
+        words = []
+        non_words = {}
+        for token in tokens:
+            for word in token:
+                try:
+                    words.append(self.wv[word])
+                # catch any "key not found" errors for words not in training data
+                # storing and writing out just for testing
+                except KeyError:
+                    non_words[word] = 1 if word not in non_words.keys() else non_words[word] + 1
+        # words = np.array(words)
+        for i in range(len(words)):
+            word = torch.Tensor(words[i])
+            words[i] = word
+        # # testing code
+        # with open('non_word_data.txt', 'w') as outfile:
+        #     for key in non_words.keys():
+        #         outfile.write(key + " : " + str(non_words[key]))
+        # outfile.close()
+        return words
 
-    # store each transcript as numpy array of word vectors
-    # planning on generalizing directories and dictionaries with config file eventually
-    ww_scripts = {}
-    for script in os.listdir("ww_text/"):
-        ww_scripts[script] = get_nparray(wv, "ww_text/" + script)
-    dn_scripts = {}
-    for script in os.listdir("dn_text/"):
-        dn_scripts[script] = get_nparray(wv, "dn_text/" + script)
-
-    # print for testing purposes
-    print(dn_scripts["episode1.txt"])
-    print(ww_scripts["101.txt"])
-
-
-if __name__ == "__main__":
-    main()
+    def get_embedding(self, word: str):
+        """
+        Single word embeddings
+        :param word: word
+        :return: embedded word vector
+        """
+        word = np.array(self.wv[word])
+        return torch.Tensor(word)
