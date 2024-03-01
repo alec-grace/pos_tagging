@@ -23,11 +23,20 @@ class FeedNet(nn.Module):
         self.fc1 = nn.Linear(input_dim, hidden_dim)
         self.sigmoid = nn.Sigmoid()
         self.fc2 = nn.Linear(hidden_dim, output_dim)
+        self.fc3 = nn.Linear(output_dim, 500)
+        self.fc4 = nn.Linear(500, 500)
+        self.fc5 = nn.Linear(500, output_dim)
         self.soft = nn.Softmax(dim=0)
 
     def forward(self, x):
         out = self.fc1(x)
         out = self.sigmoid(out)
         out = self.fc2(out)
+        out = self.sigmoid(out)
+        out = self.fc3(out)
+        out = self.sigmoid(out)
+        out = self.fc4(out)
+        out = self.sigmoid(out)
+        out = self.fc5(out)
         out = self.soft(out)
         return out

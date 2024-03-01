@@ -107,15 +107,14 @@ def main():
             continue
     # Split list into cross validation sets here
     folds = 100
-    # Split up data for cross-validation testing
     split_data = []
     for i in range(len(train_tuples) // folds):
         split_data.append(train_tuples[i:i + len(train_tuples) // 100])
 
     # Initialize network & parameters
-    epochs = 10
-    learning_rate = 0.1
-    batch_size = int(370100 / 100)
+    epochs = 500000
+    learning_rate = 0.001
+    batch_size = 2000
     criterion = nn.CrossEntropyLoss()
     net = feed_nn.FeedNet(300, 100, 25)
     optimizer = optim.SGD(net.parameters(), lr=learning_rate)
@@ -123,13 +122,13 @@ def main():
 
     # Train network
     for i in range(len(split_data)):
-        validate = split_data.pop(i)  # check accuracy with this
+        validate = split_data[i] # check accuracy with this
         training = []
-        for section in split_data:
-            for example in section:
-                training.append(example)
+        for item in split_data[:i]:
+            training.extend(item)
+        for item in split_data[i + 1:]:
+            training.extend(item)
         train(training, batch_size, net, device, optimizer, criterion, epochs)
-
         # check accuracy
         check_accuracy(DataLoader(MyDataset(validate)), net, device)
 
